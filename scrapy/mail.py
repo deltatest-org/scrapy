@@ -115,7 +115,7 @@ class MailSender:
 
         to = list(arg_to_iter(to))
         cc = list(arg_to_iter(cc))
-        1/0
+        print("11")
         msg["From"] = self.mailfrom
         msg["To"] = COMMASPACE.join(to)
         msg["Date"] = formatdate(localtime=True)
