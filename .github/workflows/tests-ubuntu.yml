@@ -15,6 +15,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PYTEST_ADDOPTS: -n auto
+      DELTA_API_KEY: ${{ secrets.DELTA_API_KEY }}
+      DELTA_REPO_ID: ${{ secrets.DELTA_REPO_ID }}
+      DELTA_BRANCH: master
     strategy:
       fail-fast: false
       matrix:
@@ -85,6 +88,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v6
@@ -96,6 +101,21 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install libxml2-dev libxslt-dev
+
+    # Write ~/.delta/config.toml so tox-spawned delta processes connect to
+    # the remote mapping DB (Delta reads from Path.home()/'.delta/config.toml').
+    - name: Configure Delta Cloud
+      run: |
+        mkdir -p ~/.delta
+        {
+          echo '[cloud]'
+          echo "api_key  = \"${DELTA_API_KEY}\""
+          echo 'api_url  = "https://api.deltatest.dev"'
+          echo "repo_id  = \"${DELTA_REPO_ID}\""
+          echo 'branch   = "master"'
+          echo 'test_dir = "tests"'
+        } > ~/.delta/config.toml
+        sed 's/= ".*"/= "***"/' ~/.delta/config.toml
 
     - name: Run tests
       env: ${{ matrix.env }}
